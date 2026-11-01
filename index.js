@@ -44,6 +44,13 @@ app.patch('/books/:id', async(req, res) => {
   res.json(result)
 })
 
+// delete
+app.delete('/books/:id', async(req, res) => {
+  const {id} = req.params
+  const result = await bookCollection.deleteOne({_id: new ObjectId(id)})
+  res.json(result)
+})
+
 //all books
 app.get('/books', async(req, res) => {
   const result = await bookCollection.find().toArray()
