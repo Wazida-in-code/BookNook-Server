@@ -34,6 +34,12 @@ app.post('/books', async(req, res) => {
 })
 
 
+app.get('/books', async(req, res) => {
+  const result = await bookCollection.find().toArray()
+  res.send(result)
+})
+
+
 
 // http://localhost:8000/
 app.get('/', (req, res) => {
