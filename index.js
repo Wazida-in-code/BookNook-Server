@@ -1,13 +1,13 @@
 import express from 'express'
 import 'dotenv/config'
 import cors from 'cors'
+import { MongoClient, ObjectId } from 'mongodb';
 
 const app = express()
 app.use(express.json())
 app.use(cors())
 const PORT = 8000
 
-import { MongoClient } from 'mongodb';
 const client = new MongoClient(process.env.MONGO_CLIENT);
 export async function connectToMongoDB() {
   try {
@@ -33,9 +33,17 @@ app.post('/books', async(req, res) => {
     res.send(result)
 })
 
-
+//all books
 app.get('/books', async(req, res) => {
   const result = await bookCollection.find().toArray()
+  res.send(result)
+})
+
+
+//one book at a time
+app.get('/books/:id', async(req, res) => {
+  const {id} = req.params
+  const result = await bookCollection.findOne({_id: new ObjectId(id)})
   res.send(result)
 })
 
