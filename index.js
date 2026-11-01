@@ -33,6 +33,17 @@ app.post('/books', async(req, res) => {
     res.send(result)
 })
 
+// edit book
+app.patch('/books/:id', async(req, res) => {
+  const {id} = req.params
+  const updatedData = req.body
+  const result = await bookCollection.updateOne(
+    {_id: new ObjectId(id)}, 
+    {$set: updatedData}
+  )
+  res.json(result)
+})
+
 //all books
 app.get('/books', async(req, res) => {
   const result = await bookCollection.find().toArray()
