@@ -47,6 +47,13 @@ app.get('/books/:id', async(req, res) => {
   res.send(result)
 })
 
+// my-books by email
+app.get('/my-books/:email', async(req, res) => {
+  const {email} = req.params
+  const result = await bookCollection.find({userEmail: email}).toArray()
+  res.send(result)
+})
+
 
 
 // http://localhost:8000/
