@@ -58,6 +58,14 @@ app.get('/books', async(req, res) => {
 })
 
 
+// only 6 books
+app.get('/six-books', async(req, res) => {
+  const result = await bookCollection.find().sort({ _id: -1 }).limit(6).toArray()
+  res.send(result)
+})
+
+
+
 //one book at a time
 app.get('/books/:id', async(req, res) => {
   const {id} = req.params
