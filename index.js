@@ -73,6 +73,13 @@ app.post('/borrows', async(req, res) => {
 })
 
 
+// my-borrows
+app.get('/my-borrows/:email', async(req, res) => {
+  const {email} = req.params
+  const result = await borrowCollection.find({borrowerEmail : email}).toArray()
+  res.send(result)
+})
+
 
 //one book at a time
 app.get('/books/:id', async(req, res) => {
