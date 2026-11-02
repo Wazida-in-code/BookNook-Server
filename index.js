@@ -67,16 +67,67 @@ app.get('/six-books', async(req, res) => {
 // borrow books
 app.post('/borrows', async(req, res) => {
     const data = req.body
-    const result = await borrowCollection.insertOne(data)
+    const alreadyBorrowed = await borrowCollection.findOne({
+    bookId: data.bookId,
+    borrowerEmail: data.borrowerEmail,
+    status: "Borrowed"
+  });
+
+  if (alreadyBorrowed) {
+  return res.status(400).send({
+    message: "You have already borrowed this book!"
+  });
+}
+    const updateResult = await bookCollection.updateOne(
+    {
+    _id: new ObjectId(data.bookId),
+    totalCopies: { $gt: 0 }
+  },
+    
+  { $inc: { totalCopies: -1 } }
+  )
+  if (updateResult.matchedCount === 0) {
+    return res.status(400).send({ message: "No copies available!" });
+}
+    const result = await borrowCollection.insertOne(data);
     console.log(result);
     res.send(result)
 })
 
 
+// return borrow
+app.patch("/borrows/:id", async (req, res) => {
+  const id = req.params.id;
+
+  const borrow = await borrowCollection.findOne({
+    _id: new ObjectId(id),
+    status: "Borrowed",
+  });
+
+  if (!borrow) {
+    return res.status(400).send({
+      message: "Book already returned!",
+    });
+  }
+
+  await borrowCollection.updateOne(
+    { _id: new ObjectId(id) },
+    { $set: { status: "Returned" } }
+  );
+
+  await bookCollection.updateOne(
+    { _id: new ObjectId(borrow.bookId) },
+    { $inc: { totalCopies: 1 } }
+  );
+
+  res.send({ message: "Book returned successfully!" });
+});
+
+
 // my-borrows
 app.get('/my-borrows/:email', async(req, res) => {
   const {email} = req.params
-  const result = await borrowCollection.find({borrowerEmail : email}).toArray()
+  const result = await borrowCollection.find({borrowerEmail : email, status: "Borrowed"}).toArray()
   res.send(result)
 })
 
