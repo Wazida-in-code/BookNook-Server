@@ -2,6 +2,7 @@ import express from 'express'
 import 'dotenv/config'
 import cors from 'cors'
 import { MongoClient, ObjectId } from 'mongodb';
+import { createRemoteJWKSet, jwtVerify } from 'jose';
 
 const app = express()
 app.use(express.json())
@@ -25,16 +26,38 @@ const db = mongoClient.db("BookNook");
 const bookCollection = db.collection("books");
 const borrowCollection = db.collection("borrows")
 
+const verifyToken = async(req, res, next) => {
+  const authHeader = req.headers.authorization
+  console.log(authHeader);
+if (!authHeader) {
+        return res.status(401).send({ msg: "Unauthorized!" })
+    }
+    const token = authHeader.split(" ")[1]
+
+    if (!token) {
+        return res.status(401).send({ msg: "Unauthorized!" })
+    }
+
+    const JWKS = createRemoteJWKSet(new URL('http://localhost:3000/api/auth/jwks'))
+
+    try {
+        const {payload} = await jwtVerify(token, JWKS)
+        next()
+    } catch (error) {
+        return res.status(500).send({ msg: "Server Error!" })
+    }
+}
+
 
 // add-book
-app.post('/books', async(req, res) => {
+app.post('/books', verifyToken, async(req, res) => {
     const data = req.body
     const result = await bookCollection.insertOne(data)
     res.send(result)
 })
 
 // edit book
-app.patch('/books/:id', async(req, res) => {
+app.patch('/books/:id', verifyToken, async(req, res) => {
   const {id} = req.params
   const updatedData = req.body
   const result = await bookCollection.updateOne(
@@ -45,7 +68,7 @@ app.patch('/books/:id', async(req, res) => {
 })
 
 // delete
-app.delete('/books/:id', async(req, res) => {
+app.delete('/books/:id', verifyToken, async(req, res) => {
   const {id} = req.params
   const result = await bookCollection.deleteOne({_id: new ObjectId(id)})
   res.json(result)
@@ -96,7 +119,7 @@ app.post('/borrows', async(req, res) => {
 
 
 // return borrow
-app.patch("/borrows/:id", async (req, res) => {
+app.patch("/borrows/:id", verifyToken, async (req, res) => {
   const id = req.params.id;
 
   const borrow = await borrowCollection.findOne({
@@ -125,22 +148,21 @@ app.patch("/borrows/:id", async (req, res) => {
 
 
 // my-borrows
-app.get('/my-borrows/:email', async(req, res) => {
+app.get('/my-borrows/:email', verifyToken, async(req, res) => {
   const {email} = req.params
   const result = await borrowCollection.find({borrowerEmail : email, status: "Borrowed"}).toArray()
   res.send(result)
 })
 
-
 //one book at a time
-app.get('/books/:id', async(req, res) => {
+app.get('/books/:id', verifyToken, async(req, res) => {
   const {id} = req.params
   const result = await bookCollection.findOne({_id: new ObjectId(id)})
   res.send(result)
 })
 
 // my-books by email
-app.get('/my-books/:email', async(req, res) => {
+app.get('/my-books/:email',verifyToken, async(req, res) => {
   const {email} = req.params
   const result = await bookCollection.find({userEmail: email}).toArray()
   res.send(result)
