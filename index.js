@@ -133,10 +133,19 @@ app.patch("/borrows/:id", verifyToken, async (req, res) => {
     });
   }
 
-  await borrowCollection.updateOne(
-    { _id: new ObjectId(id) },
-    { $set: { status: "Returned" } }
-  );
+  const updateResult = await borrowCollection.updateOne(
+  {
+    _id: new ObjectId(id),
+    status: "Borrowed"
+  },
+  { $set: { status: "Returned" } }
+);
+
+if (updateResult.modifiedCount === 0) {
+  return res.status(400).send({
+    message: "Book already returned!"
+  });
+}
 
   await bookCollection.updateOne(
     { _id: new ObjectId(borrow.bookId) },
