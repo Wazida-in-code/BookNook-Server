@@ -178,8 +178,6 @@ app.get('/my-books/:email',verifyToken, async(req, res) => {
 })
 
 
-
-// http://localhost:8000/
 app.get('/', (req, res) => {
     res.send({msg: "Server running perfectly!"})
 })
